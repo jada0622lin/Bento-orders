@@ -78,13 +78,16 @@
         }
 
         .item-name { 
-			font-weight: 900; 
+		font-weight: 900; 
     		/* 字體大小也會跟著畫面比例縮放 */
     		font-size: clamp(1rem, 3vw, 1.4rem); 
     		margin-bottom: 10px; 
     		color: #222;
     		line-height: 1.2;
-			/* --- 核心修改：強迫空格換行 --- */
+		/* 預留兩行高度，防止卡片高度不一 */
+            	min-height: 2.5em; 
+            	display: block;		
+		/* --- 核心修改：強迫空格換行 --- */
     		display: flex;
     		flex-direction: column; /* 讓內容垂直排列 */
     		align-items: center;    /* 居中對齊 */
@@ -295,8 +298,11 @@ color: var(--deep-orange);
     // 自動生成選單
     const menuEl = document.getElementById('menu');
     items.forEach((item, index) => {
-        menuEl.innerHTML += `
-            <div class="item-card">
+  	 // 核心修改：這行會自動把名稱中的「第一個空格」換成「換行標籤」
+        const displayName = item.name.replace(' ', '<br>');    
+	    menuEl.innerHTML += `
+  
+	    <div class="item-card">
                 <div>
                     <div class="item-name">${item.name}</div>
                     <div class="item-price">$${item.price}</div>
