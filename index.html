@@ -84,10 +84,15 @@
     		margin-bottom: 10px; 
     		color: #222;
     		line-height: 1.2;
-    		/* 核心設定：當空間不足時，讓後面的越文自動掉到下一行 */
-    		word-break: break-word; 
-    		overflow-wrap: break-word;
-    		min-height: 2.5em; /* 預留兩行高度，讓卡片對齊 */
+			/* --- 核心修改：強迫空格換行 --- */
+    		display: flex;
+    		flex-direction: column; /* 讓內容垂直排列 */
+    		align-items: center;    /* 居中對齊 */
+    		white-space: pre-line;  /* 承認換行符號 */
+    		/* ---------------------------- */
+    
+    		min-height: 2.8em; 
+    		margin-bottom: 10px;
         }
 
         .item-price { 
@@ -280,8 +285,8 @@ color: var(--deep-orange);
 <script>
     // 菜單資料
     const items = [
-        { name: "隨機精選便當hộp cơm trưa", price: 80 },
-        { name: "白飯Cơm trắng", price: 10 },
+        { name: "隨機精選便當 hộp cơm trưa", price: 80 },
+        { name: "白飯 Cơm trắng", price: 10 },
  
     ];
 
