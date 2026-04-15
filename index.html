@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>元氣食堂 - 便當訂購系統</title>
+    <style>
+        /* 1. 配色與變數定義 */
+        :root {
+            --primary-orange: #FF9F1C;   /* 主橘色 */
+            --deep-orange: #E76F51;      /* 價格深橘 */
+            --bg-light: #FDFCF0;         /* 溫暖米白背景 */
+            --card-bg: #FFFFFF;          /* 純白卡片 */
+            --text-dark: #333333;        /* 文字深灰 */
+            --sidebar-bg: #FFFFFF;       /* 側欄背景 */
+        }
+
+        body {  
+	font-family: "Microsoft JhengHei", sans-serif; 
+	background-color: var(--bg-light); 
+	margin: 0; 
+	padding: 0;
+    
+/* 關鍵：讓 body 變成一個垂直排列的容器，並水平居中 */
+    	display: flex;
+    	flex-direction: column;
+    	align-items: center; 
+    	justify-content: flex-start;
+   	 min-height: 100vh; /* 確保高度撐滿螢幕，標題與內容才會在中間 */        }
+/* 建立一個包覆所有內容的容器 */
+	.container {
+    		width: 90%;            /* 在小螢幕時佔 90% 寬 */
+    		max-width: 1100px;     /* 在大螢幕時最大寬度限制在 1100px */
+    		display: flex;         /* 讓選單與側欄並排 */
+    		gap: 30px;             /* 兩者之間的間距 */
+    		align-items: flex-start; /* 讓兩邊頂部對齊 */   }
+
+/* 調整標題，讓它跟容器一樣寬並置中 */
+	.header-area {
+    		width: 90%;
+    		max-width: 1100px;
+    		margin-bottom: 20px; }
+
+/* 右側側邊欄固定寬度 */
+	.sidebar { 
+    		flex: 1; 
+    		min-width: 320px; 
+    		max-width: 350px;
+    		background: white;
+    		border-radius: 20px;
+    		padding: 25px;
+    		box-shadow: 0 10px 30px rgba(0,0,0,0.08);  }
+/*讓畫面並排*/
+	.menu-container { 
+    		flex: 2; 
+    		display: grid; 
+    		grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); 
+    		gap: 20px;    }
+
+
+        /* 便當卡片：增加現代感圓角與陰影 */
+        .item-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 25px 15px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 280px; /* 確保長度統一且足夠 */
+        }
+
+        .item-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+        }
+
+        .item-name { 
+            font-weight: 900; 
+            font-size: 1.5em; 
+            margin-bottom: 10px; 
+            color: #222;
+        }
+
+        .item-price { 
+            color: var(--deep-orange); 
+            font-weight: 800; 
+            font-size: 2em; 
+            margin-bottom: 20px; 
+        }
+
+        /* 數量與按鈕組合 */
+        .input-group { 
+            display: flex; 
+            gap: 15px; 
+            justify-content: center; 
+            align-items: center;
+        }
+
+        /* 數量框：圓形設計 */
+        .qty-input { 
+            width: 60px; 
+            height: 45px;
+            text-align: center; 
+            border: 2px solid #EEE; 
+            border-radius: 12px; 
+            font-size: 1.5em;
+            outline: none;
+        }
+
+        /* 立體橘色按鈕 */
+        .add-btn { 
+            background-color: var(--primary-orange); 
+            color: white; 
+            border: none; 
+            padding: 12px 28px; 
+            border-radius: 15px; 
+            cursor: pointer; 
+            font-size: 1.4em;
+            font-weight: bold;
+            box-shadow: 0 5px 0 #cc7e0e; /* 立體感底部 */
+            position: relative;
+            transition: all 0.1s;
+        }
+
+        .add-btn:active {
+            box-shadow: 0 0 0 #cc7e0e;
+            top: 5px; /* 按下去的位移 */
+        }
+
+        /* 3. 右側訂單資訊 */
+        .sidebar { 
+            flex: 1; 
+            background: var(--sidebar-bg); 
+            border-radius: 20px; 
+            padding: 25px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            height: fit-content; 
+            min-width: 300px;
+            border-top: 8px solid var(--primary-orange); /* 頂部裝飾線 */
+        }
+
+        .cart-header { 
+            font-size: 1.5em;
+            border-bottom: 2px dashed #DDD; 
+            margin-bottom: 20px; 
+            padding-bottom: 10px; 
+            font-weight: bold; 
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #cart-list { list-style: none; padding: 0; margin-bottom: 20px; }
+        #cart-list li { 
+            padding: 8px 0; 
+            border-bottom: 1px solid #F5F5F5;
+            font-size: 1.1em;
+        }
+
+        .total-price { 
+            color: var(--deep-orange); 
+            font-size: 1.8em; 
+            font-weight: 900; 
+            margin: 20px 0; 
+            text-align: right;
+        }
+
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: bold; color: #666; }
+        
+        .form-control { 
+            width: 100%; 
+            padding: 12px; 
+            border: 2px solid #EEE; 
+            border-radius: 12px; 
+            box-sizing: border-box; 
+            font-size: 1.1em;
+        }
+
+        .submit-btn { 
+            background-color: var(--primary-orange); 
+            color: white; 
+            width: 100%; 
+            padding: 15px; 
+            border: none; 
+            border-radius: 15px; 
+            font-size: 1.3em; 
+            font-weight: bold; 
+            cursor: pointer; 
+            margin-bottom: 15px;
+            box-shadow: 0 4px 0 #cc7e0e;
+        }
+
+        .submit-btn:active { top: 4px; box-shadow: 0 0 0; }
+
+        .query-btn { 
+            background-color: #f1f1f1; 
+            color: #666; 
+            width: 100%; 
+            padding: 12px; 
+            border: none; 
+            border-radius: 12px; 
+            cursor: pointer; 
+            font-weight: bold;
+        }
+/* 當螢幕寬度小於 768px (通常是手機或直向平板) 時執行以下設定 */
+	@media (max-width: 768px) {
+
+    /* 1. 讓並排容器變成垂直排列 */
+    .container {
+        flex-direction: column;
+        align-items: center; /* 讓選單與側欄都置中 */
+    }
+
+    /* 2. 讓選單撐滿寬度 */
+    .menu-container {
+        width: 100%;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); /* 手機上一排顯示兩個小一點的卡片 */
+    }
+
+    /* 3. 讓側欄(購物車)也撐滿寬度 */
+    .sidebar {
+        width: 100%;
+        max-width: none;
+        min-width: 0;
+        box-sizing: border-box; /* 確保 padding 不會撐破寬度 */
+    }
+
+    /* 4. 標題縮小一點點，才不會在手機上換行 */
+    .header-area h1 {
+        font-size: 1.5em !important;
+        text-align: center;
+    }
+
+    </style>
+</head>
+<body>
+
+    <div class="header-area">
+        <h1 style="color: var(--deep-orange); margin: 0; font-size: 2em;">🍱 KITA元氣食堂 - 便當訂購系統</h1>
+    </div>
+
+    <div class="container">
+        
+        <div class="menu-container" id="menu"></div>
+
+        <div class="sidebar">
+            <div class="cart-header">🍱 我的點餐內容</div>
+            <ul id="cart-list">
+                <li>尚無選餐...</li>
+            </ul>
+
+            <div class="total-price">總計: $<span id="total-amount">0</span></div>
+
+            <div class="form-group">
+                <label>員工工號</label>
+                <input type="text" id="emp-id" class="form-control" placeholder="請輸入你的工號số nhân viên">
+            </div>
+
+            <button class="submit-btn" onclick="submitOrder()">送出訂單</button>
+            <button class="query-btn">🔍 查詢我的歷史訂單</button>
+        </div>
+
+    </div> 
+
+
+<script>
+    // 菜單資料
+    const items = [
+        { name: "隨機精選便當hộp cơm trưa", price: 80 },
+        { name: "白飯Cơm trắng", price: 10 },
+ 
+    ];
+
+    let cart = [];
+
+    // 自動生成選單
+    const menuEl = document.getElementById('menu');
+    items.forEach((item, index) => {
+        menuEl.innerHTML += `
+            <div class="item-card">
+                <div>
+                    <div class="item-name">${item.name}</div>
+                    <div class="item-price">$${item.price}</div>
+                </div>
+                <div class="input-group">
+                    <input type="number" id="qty-${index}" class="qty-input" value="1" min="1">
+                    <button class="add-btn" onclick="addToCart(${index})">加入</button>
+                </div>
+            </div>
+        `;
+    });
+
+    function addToCart(index) {
+        const qtyInput = document.getElementById(`qty-${index}`);
+        const qty = parseInt(qtyInput.value);
+        const item = items[index];
+        
+        const existing = cart.find(c => c.name === item.name);
+        if (existing) {
+            existing.qty += qty;
+        } else {
+            cart.push({ ...item, qty });
+        }
+        renderCart();
+        qtyInput.value = 1; // 加完後重置數量為1
+    }
+
+	function renderCart() {
+   		 const listEl = document.getElementById('cart-list');
+    		const totalEl = document.getElementById('total-amount');
+    
+    		if (cart.length === 0) {
+ 	       listEl.innerHTML = '<li>尚無選餐...</li>';
+ 	       totalEl.innerText = '0';
+	        return;
+	    }
+
+    // 產生清單，並為每個項目加上一個刪除按鈕
+	    listEl.innerHTML = cart.map((item, index) => `
+   	           <li style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f9f9f9;">
+ 	           <span style="font-size: 1.1em;"><strong>${item.name}</strong> x ${item.qty}</span>
+      		   <div style="display: flex; align-items: center;">
+     	           <span style="margin-right: 15px; font-weight: bold; color: var(--deep-orange);">$${item.price * item.qty}</span>
+                   <button onclick="removeFromCart(${index})" 
+                        style="background: #ffeded; border: none; color: #d9534f; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-weight: bold; font-size: 1.2em; display: flex; align-items: center; justify-content: center; transition: 0.2s;">
+                    ✕
+
+                </button>
+            </div>
+        </li>
+    `).join('');
+
+    const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+    totalEl.innerText = total;   }
+
+// 執行刪除動作的函數
+	function removeFromCart(index) {
+    	
+	// 1. 從購物車資料中刪除被點選的那一筆
+    		cart.splice(index, 1);
+    
+    	// 2. 刪除後，立即重新呼叫您剛才寫好的 renderCart()，讓畫面更新
+    		renderCart();  }
+
+    function submitOrder() {
+ 	const empId = document.getElementById('emp-id').value;
+        const totalAmount = document.getElementById('total-amount').innerText;
+        
+        if (!empId) return alert('請先輸入工號喔！');
+        if (cart.length === 0) return alert('您的購物車還是空的！');
+
+        // 1. 整理訂單細項：把 [{name:"白飯", qty:2}] 變成 "白飯x2" 的文字格式
+        const orderSummary = cart.map(item => `${item.name}x${item.qty}`).join(', ');
+
+        // 2. 顯示讀取中，避免使用者重複狂按
+        const btn = document.querySelector('.submit-btn');
+        const originalText = btn.innerText;
+        btn.innerText = "傳送訂單中...";
+        btn.disabled = true;
+
+        // 3. 準備傳送給 Google Sheets 的內容
+        const payload = {
+            empId: empId,
+            orderItems: orderSummary,
+            totalPrice: totalAmount
+        };
+
+        // 4. 正式發送資料
+        fetch('https://script.google.com/macros/s/AKfycbzFuSEGH1LZLHGGYMMakVR9FIMoeO7av3Gm1wLRAzCDc6VSCppBUdUgZ4UCWER5zne1_Q/exec', { /*<--- 這裡一定要換成你的網址*/
+            method: 'POST',
+            mode: 'no-cors', // 加入此模式可以避免跨網域問題
+            body: JSON.stringify(payload)
+        })
+        .then(() => {
+            // 因為用了 no-cors，fetch 無法讀取回傳值，但只要執行到這裡通常就成功了
+            alert(`🎉 訂購完成！\n工號：${empId}\n訂單已記錄至後台。`);
+            
+            // 清空畫面上的購物車
+            cart = [];
+            renderCart();
+            document.getElementById('emp-id').value = '';
+            
+            // 恢復按鈕狀態
+            btn.innerText = originalText;
+            btn.disabled = false;
+        })
+        .catch(err => {
+            console.error(err);
+            alert('系統連線失敗，請檢查網路或網址是否正確。');
+            btn.innerText = originalText;
+            btn.disabled = false;
+        });
+    }
+</script>
+
+</body>
+</html>
