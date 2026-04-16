@@ -222,12 +222,16 @@
 
     // --- 您指定的成功視窗樣式 ---
     function showSuccess(empIdValue, timeString, btn, originalText) {
+        // 1. 先抓取今天的日期
+        const now = new Date();
+        const datePart = `${now.getFullYear()}/${(now.getMonth() + 1)}/${now.getDate()}`;
+        
         Swal.fire({
             title: 'KITA 元氣食堂',
             html: `<div style="text-align: left; font-size: 1.1em; line-height: 1.8;">
-                    🎉 <b>訂購完成！</b><br>
+                    🎉🎉🎉 <b>訂購完成！</b><br>
                     👤 工號：${empIdValue}<br>
-                    ⏰ 訂購時間：${timeString}<br>
+                    ⏰ 訂購時間：${datePart} ${timeString}<br>
                     ✅ 訂單已記錄至後台。
                    </div>`,
             icon: 'success',
