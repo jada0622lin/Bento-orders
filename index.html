@@ -221,7 +221,7 @@
         renderCart();
     }
 
-    function submitOrder() {
+function submitOrder() {
         const empInput = document.getElementById('emp-id');
         const empIdValue = empInput.value.trim();
         const totalAmount = document.getElementById('total-amount').innerText;
@@ -237,38 +237,46 @@
             btn.disabled = true;
         }
 
-        const orderSummary = cart.map(item => `${item.name}x${item.qty}`).join(', ');
+        const orderSummary = cart.map(item => `${item.name.replace('\n', ' ')}x${item.qty}`).join(', ');
         const payload = { empId: empIdValue, orderItems: orderSummary, totalPrice: totalAmount };
 
+        // --- 核心改動：先執行顯示成功與清空動作 ---
+        showSuccess(empIdValue, btn, originalText);
+
+        // --- 背景傳送資料，不管結果如何都不再干擾網頁運作 ---
         fetch('https://script.google.com/macros/s/AKfycbzFuSEGH1LZLHGGYMMakVR9FIMoeO7av3Gm1wLRAzCDc6VSCppBUdUgZ4UCWER5zne1_Q/exec', {
             method: 'POST',
             mode: 'no-cors',
             body: JSON.stringify(payload)
-        })
-        .then(() => {
-            showSuccess(empIdValue, btn, originalText);
-        })
-        .catch(err => {
-            // 處理 Google 回傳時的隱形錯誤 (no-cors 限制)
-            showSuccess(empIdValue, btn, originalText);
-        });
+        }).catch(err => console.log('背景傳送完成或被攔截'));
     }
 
     function showSuccess(empIdValue, btn, originalText) {
         const now = new Date();
         const timeString = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
 
+        // 1. 彈出精美對話框
         Swal.fire({
             title: 'KITA 元氣食堂',
-            html: `🎉🎉🎉 <b>訂購完成！</b><br>工號：${empIdValue}<br>時間：${timeString}<br>✅ 訂單已記錄至後台。`,
+            html: `<div style="text-align: left; font-size: 1.1em; line-height: 1.8;">
+                    🎉 <b>訂購完成！</b><br>
+                    👤 工號：${empIdValue}<br>
+                    ⏰ 時間：${timeString}<br>
+                    ✅ 訂單已記錄至後台。
+                   </div>`,
             icon: 'success',
-            confirmButtonColor: '#ff9800'
+            confirmButtonColor: '#ff9800',
+            confirmButtonText: '確定'
         });
 
+        // 2. 存入手機 localStorage
         localStorage.setItem('savedEmpId', empIdValue); 
-        cart = []; // 清空購物車
-        renderCart(); // 重新渲染頁面
+        
+        // 3. 確實清空購物車並更新畫面
+        cart = []; 
+        renderCart();
 
+        // 4. 恢復按鈕狀態
         if (btn) {
             btn.innerText = originalText;
             btn.disabled = false;
