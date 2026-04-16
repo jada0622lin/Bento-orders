@@ -131,77 +131,95 @@
     </div> 
 
 <script>
-    window.onload = function() {
-    // 顯示今日日期
-    const dateEl = document.getElementById('current-date');
-        if (dateEl) {
-            const today = new Date();
-            const y = today.getFullYear();
-            const m = today.getMonth() + 1;
-            const d = today.getDate();
-            // 加上 "今日：" 前綴
-            dateEl.innerText = `今日：${y}/${m}/${d}`;
-        }
-        
-    // 自動填入工號 (您原本的邏輯)
-    const savedId = localStorage.getItem('savedEmpId');
-    if (savedId) {
-        const empInput = document.getElementById('emp-id');
-        if (empInput) empInput.value = savedId;
-    }
-};
-    
-    // 菜單資料 (中文與越文之間必須有空格)
+    // 1. 菜單資料
     const items = [
         { name: "隨機精選便當 hộp cơm trưa", price: 80 },
         { name: "白飯 Cơm trắng", price: 10 }
     ];
 
-    
     let cart = [];
 
-    // 自動生成選單
-    const menuEl = document.getElementById('menu');
-    items.forEach((item, index) => {
-        // 關鍵：將第一個空格替換為換行符號 <br>
-        const displayName = item.name.replace(' ', '<br>');
+    window.onload = function() {
+        // 顯示今日日期
+        const dateEl = document.getElementById('current-date');
+        if (dateEl) {
+            const today = new Date();
+            const y = today.getFullYear();
+            const m = today.getMonth() + 1;
+            const d = today.getDate();
+            dateEl.innerText = `今日：${y}/${m}/${d}`;
+        }
         
-        menuEl.innerHTML += `
-            <div class="item-card">
-                <div>
-                    <div class="item-name">${displayName}</div>
-                    <div class="item-price">$${item.price}</div>
+        // 自動填入工號
+        const savedId = localStorage.getItem('savedEmpId');
+        if (savedId) {
+            const empInput = document.getElementById('emp-id');
+            if (empInput) empInput.value = savedId;
+        }
+
+        // 初始化選單
+        renderMenu();
+    };
+
+    // 2. 生成選單函數
+    function renderMenu() {
+        const menuEl = document.getElementById('menu');
+        if (!menuEl) return;
+        
+        let menuHTML = '';
+        items.forEach((item, index) => {
+            // 將第一個空格替換為換行符號 <br>
+            const displayName = item.name.replace(' ', '<br>');
+            
+            menuHTML += `
+                <div class="item-card">
+                    <div>
+                        <div class="item-name">${displayName}</div>
+                        <div class="item-price">$${item.price}</div>
+                    </div>
+                    <div class="input-group">
+                        <input type="number" id="qty-${index}" class="qty-input" value="1" min="1">
+                        <button class="add-btn" onclick="addToCart(${index})">加入</button>
+                    </div>
                 </div>
-                <div class="input-group">
-                    <input type="number" id="qty-${index}" class="qty-input" value="1" min="1">
-                    <button class="add-btn" onclick="addToCart(${index})">加入</button>
-                </div>
-            </div>
-        `;
-    });
+            `;
+        });
+        menuEl.innerHTML = menuHTML;
+    }
 
     function addToCart(index) {
-        const qty = parseInt(document.getElementById(`qty-${index}`).value);
+        const qtyInput = document.getElementById(`qty-${index}`);
+        const qty = parseInt(qtyInput.value) || 1;
         const item = items[index];
         const existing = cart.find(c => c.name === item.name);
-        if (existing) { existing.qty += qty; } else { cart.push({ ...item, qty }); }
+        
+        if (existing) { 
+            existing.qty += qty; 
+        } else { 
+            cart.push({ ...item, qty }); 
+        }
         renderCart();
+        qtyInput.value = 1; // 重設輸入框
     }
 
     function renderCart() {
         const listEl = document.getElementById('cart-list');
         const totalEl = document.getElementById('total-amount');
+        if (!listEl || !totalEl) return;
+
         if (cart.length === 0) {
             listEl.innerHTML = '<li>尚無選餐...</li>';
             totalEl.innerText = '0';
             return;
         }
+
         listEl.innerHTML = cart.map((item, index) => `
             <li style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f9f9f9;">
                 <span><strong>${item.name}</strong> x ${item.qty}</span>
                 <button onclick="removeFromCart(${index})" style="background:#ffeded; border:none; color:#d9534f; width:28px; height:28px; border-radius:50%; cursor:pointer;">✕</button>
             </li>
         `).join('');
+
         const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
         totalEl.innerText = total;
     }
@@ -211,8 +229,7 @@
         renderCart();
     }
 
-
-  function submitOrder() {
+    function submitOrder() {
         const empInput = document.getElementById('emp-id');
         const empIdValue = empInput.value.trim();
         const totalAmount = document.getElementById('total-amount').innerText;
@@ -221,18 +238,19 @@
         if (cart.length === 0) return Swal.fire('提示', '您的購物車還是空的！', 'warning');
 
         const btn = document.querySelector('.submit-btn');
-        const originalText = btn.innerText;
-        btn.innerText = "傳送中...";
-        btn.disabled = true;
+        const originalText = btn ? btn.innerText : "送出訂單";
+        
+        if (btn) {
+            btn.innerText = "傳送中...";
+            btn.disabled = true;
+        }
 
         const orderSummary = cart.map(item => `${item.name.replace('\n', ' ')}x${item.qty}`).join(', ');
         const payload = { empId: empIdValue, orderItems: orderSummary, totalPrice: totalAmount };
 
-        // 取得時間字串備用
         const now = new Date();
         const timeString = `${now.getFullYear()}/${now.getMonth() + 1}/${now.getDate()} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
 
-        // 注意：請確保下方的網址是您正確的 GAS 網址
         fetch('https://script.google.com/macros/s/AKfycbzFuSEGH1LZLHGGYMMakVR9FIMoeO7av3Gm1wLRAzCDc6VSCppBUdUgZ4UCWER5zne1_Q/exec', {
             method: 'POST',
             mode: 'no-cors',
@@ -242,13 +260,11 @@
             showSuccess(empIdValue, timeString, btn, originalText);
         })
         .catch(err => {
-            // 處理 CORS 導致的假錯誤，依然顯示成功
             showSuccess(empIdValue, timeString, btn, originalText);
             console.log('CORS block ignored, order likely sent.');
         });
     }
 
-    // 將成功視窗獨立出來
     function showSuccess(empIdValue, timeString, btn, originalText) {
         Swal.fire({
             title: 'KITA 元氣食堂',
@@ -263,30 +279,15 @@
             confirmButtonText: '確定'
         });
 
-        // 存入手機 localStorage 
         localStorage.setItem('savedEmpId', empIdValue); 
-        
-        // 清空資料
         cart = [];
         renderCart();
 
-        // 恢復按鈕 
         if (btn) {
             btn.innerText = originalText;
             btn.disabled = false;
         }
     }
- 
-        .catch(err => {
-            console.error(err);
-            alert('傳送發生錯誤，請檢查網路或稍後再試。');
-            if (btn) {
-                btn.innerText = originalText;
-                btn.disabled = false;
-            }
-        });
-    }
-
 </script>
 
 </body>
