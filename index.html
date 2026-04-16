@@ -127,6 +127,23 @@
     </div> 
 
 <script>
+    window.onload = function() {
+    // 顯示今日日期
+        const dateEl = document.getElementById('current-date');
+        if (dateEl) {
+        const today = new Date();
+        // 格式：2026/4/16
+        dateEl.innerText = today.getFullYear() + '/' + (today.getMonth() + 1) + '/' + today.getDate();
+    }
+
+    // 自動填入工號 (您原本的邏輯)
+    const savedId = localStorage.getItem('savedEmpId');
+    if (savedId) {
+        const empInput = document.getElementById('emp-id');
+        if (empInput) empInput.value = savedId;
+    }
+};
+    
     // 菜單資料 (中文與越文之間必須有空格)
     const items = [
         { name: "隨機精選便當 hộp cơm trưa", price: 80 },
