@@ -253,9 +253,19 @@ function submitOrder() {
             const now = new Date();
             const timeString = `${now.getFullYear()}/${now.getMonth() + 1}/${now.getDate()} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
 
-            // 在彈出視窗中顯示日期時間
-            alert(`🎉🎉🎉 訂購完成！\n工號：${empIdValue}\n訂購時間：${timeString}\n訂單已記錄至後台。`);
-            
+            // 在彈出視窗中顯示日期時間 // 使用 SweetAlert2 彈出視窗
+            Swal.fire({
+                title: 'KITA 元氣食堂',
+                html: `<div style="text-align: left; font-size: 1.1em; line-height: 1.8;">
+                        🎉 <b>訂購完成！</b><br>
+                        👤 工號：${empIdValue}<br>
+                        ⏰ 訂購時間：${timeString}<br>
+                        ✅ 訂單已記錄至後台。
+                       </div>`,
+                icon: 'success',
+                confirmButtonColor: '#ff9800',
+                confirmButtonText: '確定'
+            });
             // 存入手機 localStorage
             localStorage.setItem('savedEmpId', empIdValue); 
 
