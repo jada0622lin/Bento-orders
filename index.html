@@ -131,73 +131,83 @@
     </div> 
 
 <script>
-    // 1. 基礎資料
+    // 1. 菜單資料
     const items = [
         { name: "隨機精選便當 hộp cơm trưa", price: 80 },
         { name: "白飯 Cơm trắng", price: 10 }
     ];
     let cart = [];
 
+    // 當網頁載入完成後執行
     window.onload = function() {
+        console.log("網頁已載入");
+        
+        // 顯示今日日期
         const dateEl = document.getElementById('current-date');
         if (dateEl) {
             const today = new Date();
             dateEl.innerText = `今日：${today.getFullYear()}/${today.getMonth() + 1}/${today.getDate()}`;
         }
+        
+        // 自動填入工號
         const savedId = localStorage.getItem('savedEmpId');
-        if (savedId) {
-            const empInput = document.getElementById('emp-id');
-            if (empInput) empInput.value = savedId;
-        }
+        const empInput = document.getElementById('emp-id');
+        if (savedId && empInput) { empInput.value = savedId; }
+
+        // 核心：顯示菜單
         renderMenu();
     };
 
     function renderMenu() {
         const menuEl = document.getElementById('menu');
-        if (!menuEl) return;
-        let menuHTML = '';
-        items.forEach((item, index) => {
-            const displayName = item.name.replace(' ', '<br>');
-            menuHTML += `
-                <div class="item-card">
-                    <div>
-                        <div class="item-name">${displayName}</div>
-                        <div class="item-price">$${item.price}</div>
-                    </div>
-                    <div class="input-group">
-                        <input type="number" id="qty-${index}" class="qty-input" value="1" min="1">
-                        <button class="add-btn" onclick="addToCart(${index})">加入</button>
-                    </div>
-                </div>`;
-        });
-        menuEl.innerHTML = menuHTML;
+        
+        // 如果找不到 menu 標籤，就在控制台報錯，方便我們找原因
+        if (!menuEl) {
+            console.error("找不到 ID 為 'menu' 的 HTML 元素！請檢查 HTML 中是否有 <div id='menu'></div>");
+            return;
+        }
+
+        menuEl.innerHTML = items.map((item, index) => `
+            <div class="item-card">
+                <div>
+                    <div class="item-name">${item.name.replace(' ', '<br>')}</div>
+                    <div class="item-price">$${item.price}</div>
+                </div>
+                <div class="input-group">
+                    <input type="number" id="qty-${index}" class="qty-input" value="1" min="1">
+                    <button class="add-btn" onclick="addToCart(${index})">加入</button>
+                </div>
+            </div>`).join('');
     }
 
     function addToCart(index) {
         const qtyInput = document.getElementById(`qty-${index}`);
-        const qty = parseInt(qtyInput.value) || 1;
+        const qty = qtyInput ? parseInt(qtyInput.value) : 1;
         const item = items[index];
         const existing = cart.find(c => c.name === item.name);
         if (existing) { existing.qty += qty; } else { cart.push({ ...item, qty }); }
         renderCart();
-        qtyInput.value = 1;
+        if (qtyInput) qtyInput.value = 1;
     }
 
     function renderCart() {
         const listEl = document.getElementById('cart-list');
         const totalEl = document.getElementById('total-amount');
-        if (!listEl || !totalEl) return;
+        if (!listEl) return;
+
         if (cart.length === 0) {
             listEl.innerHTML = '<li>尚無選餐...</li>';
-            totalEl.innerText = '0';
+            if (totalEl) totalEl.innerText = '0';
             return;
         }
+
         listEl.innerHTML = cart.map((item, index) => `
             <li style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f9f9f9;">
                 <span><strong>${item.name}</strong> x ${item.qty}</span>
                 <button onclick="removeFromCart(${index})" style="background:#ffeded; border:none; color:#d9534f; width:28px; height:28px; border-radius:50%; cursor:pointer;">✕</button>
             </li>`).join('');
-        totalEl.innerText = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+
+        if (totalEl) totalEl.innerText = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
     }
 
     function removeFromCart(index) {
@@ -207,30 +217,26 @@
 
     function submitOrder() {
         const empInput = document.getElementById('emp-id');
-        const empIdValue = empInput.value.trim();
-        const totalAmount = document.getElementById('total-amount').innerText;
-        
+        const empIdValue = empInput ? empInput.value.trim() : "";
+        const totalEl = document.getElementById('total-amount');
+        const totalAmount = totalEl ? totalEl.innerText : "0";
+
         if (!empIdValue) return Swal.fire('提示', '請先輸入工號喔！', 'warning');
         if (cart.length === 0) return Swal.fire('提示', '您的購物車還是空的！', 'warning');
 
-        const btn = document.querySelector('.submit-btn');
-        const originalText = btn ? btn.innerText : "送出訂單";
-        if (btn) { btn.innerText = "傳送中..."; btn.disabled = true; }
+        // 先執行成功通知與清空
+        showSuccess(empIdValue);
 
+        // 背景傳送
         const orderSummary = cart.map(item => `${item.name}x${item.qty}`).join(', ');
-        const payload = { empId: empIdValue, orderItems: orderSummary, totalPrice: totalAmount };
-
-        // 核心：直接顯示成功並背景傳送
-        showSuccess(empIdValue, btn, originalText);
-
         fetch('https://script.google.com/macros/s/AKfycbzFuSEGH1LZLHGGYMMakVR9FIMoeO7av3Gm1wLRAzCDc6VSCppBUdUgZ4UCWER5zne1_Q/exec', {
             method: 'POST',
             mode: 'no-cors',
-            body: JSON.stringify(payload)
+            body: JSON.stringify({ empId: empIdValue, orderItems: orderSummary, totalPrice: totalAmount })
         });
     }
 
-    function showSuccess(empIdValue, btn, originalText) {
+    function showSuccess(empIdValue) {
         const now = new Date();
         const timeString = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
         
@@ -241,10 +247,9 @@
             confirmButtonColor: '#ff9800'
         });
 
-        localStorage.setItem('savedEmpId', empIdValue); 
-        cart = []; 
+        localStorage.setItem('savedEmpId', empIdValue);
+        cart = [];
         renderCart();
-        if (btn) { btn.innerText = originalText; btn.disabled = false; }
     }
 </script>
 
