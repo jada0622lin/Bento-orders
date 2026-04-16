@@ -183,26 +183,34 @@
         renderCart();
     }
 
-    function submitOrder() {
-        const empId = document.getElementById('emp-id').value;
+ function submitOrder() {
+        const empId = document.getElementById('emp-id');
         const totalAmount = document.getElementById('total-amount').innerText;
-        if (!empId || cart.length === 0) return alert('請確認工號並選擇餐點！');
+        
+        // 檢查防呆
+        if (!empId.value || cart.length === 0) return alert('請確認工號並選擇餐點！');
+
+        // 定義按鈕變數 (這是您漏掉的地方)
+        const btn = document.querySelector('.submit-btn');
+        const originalText = btn.innerText;
+        
+        // 改變按鈕狀態
+        btn.innerText = "傳送訂單中...";
+        btn.disabled = true;
 
         const orderSummary = cart.map(item => `${item.name}x${item.qty}`).join(', ');
-        const payload = { empId: empId, orderItems: orderSummary, totalPrice: totalAmount };
+        const payload = { empId: empId.value, orderItems: orderSummary, totalPrice: totalAmount };
 
         fetch('https://script.google.com/macros/s/AKfycbzFuSEGH1LZLHGGYMMakVR9FIMoeO7av3Gm1wLRAzCDc6VSCppBUdUgZ4UCWER5zne1_Q/exec', {
             method: 'POST',
             mode: 'no-cors',
             body: JSON.stringify(payload)
-        }).then(() => {
-  
-// 因為用了 no-cors，fetch 無法讀取回傳值，但只要執行到這裡通常就成功了
-            alert(`🎉 訂購完成！\n工號：${empId}\n訂單已記錄至後台。`);
+        })
+        .then(() => {
+            alert(`🎉 訂購完成！\n工號：${empId.value}\n訂單已記錄至後台。`);
             
-            // --- 加入這行：把工號存進瀏覽器 ---
-            localStorage.setItem('savedEmpId', empId); 
-            // ------------------------------
+            // 存入工號供下次使用
+            localStorage.setItem('savedEmpId', empId.value); 
 
             cart = [];
             renderCart();
@@ -213,23 +221,22 @@
         })
         .catch(err => {
             console.error(err);
+            alert('系統連線失敗，請稍後再試。');
             btn.innerText = originalText;
             btn.disabled = false;
         });
     }
 
-    // --- 正確的 window.onload 放這裡 ---
+    // --- 保持您的 window.onload 不變 ---
     window.onload = function() {
         const savedId = localStorage.getItem('savedEmpId');
         if (savedId) {
-            // 如果有存過的工號，直接填入輸入框
             const empInput = document.getElementById('emp-id');
             if (empInput) {
                 empInput.value = savedId;
             }
         }
     };
-    // ---------------------------------
 
 </script>
 
