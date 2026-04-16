@@ -129,12 +129,15 @@
 <script>
     window.onload = function() {
     // 顯示今日日期
-        const dateEl = document.getElementById('current-date');
+const dateEl = document.getElementById('current-date');
         if (dateEl) {
-        const today = new Date();
-        // 格式：2026/4/16
-        dateEl.innerText = today.getFullYear() + '/' + (today.getMonth() + 1) + '/' + today.getDate();
-    }
+            const today = new Date();
+            const y = today.getFullYear();
+            const m = today.getMonth() + 1;
+            const d = today.getDate();
+            // 在前面加上 "今日："
+            dateEl.innerText = `今日：${y}/${m}/${d}`;
+        }
 
     // 自動填入工號 (您原本的邏輯)
     const savedId = localStorage.getItem('savedEmpId');
