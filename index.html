@@ -254,7 +254,7 @@ function submitOrder() {
             const timeString = `${now.getFullYear()}/${now.getMonth() + 1}/${now.getDate()} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
 
             // 在彈出視窗中顯示日期時間
-            alert(`🎉 訂購完成！\n工號：${empIdValue}\n時間：${timeString}\n訂單已記錄至後台。`);
+            alert(`🎉 訂購完成！\n工號：${empIdValue}\n訂購時間：${timeString}\n訂單已記錄至後台。`);
             
             // 存入手機 localStorage
             localStorage.setItem('savedEmpId', empIdValue); 
