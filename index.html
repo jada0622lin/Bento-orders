@@ -131,36 +131,30 @@
     </div> 
 
 <script>
-    // 1. 菜單資料
+    // 1. 基礎資料
     const items = [
         { name: "隨機精選便當 hộp cơm trưa", price: 80 },
         { name: "白飯 Cơm trắng", price: 10 }
     ];
-
     let cart = [];
 
     window.onload = function() {
-        // 顯示今日日期
         const dateEl = document.getElementById('current-date');
         if (dateEl) {
             const today = new Date();
             dateEl.innerText = `今日：${today.getFullYear()}/${today.getMonth() + 1}/${today.getDate()}`;
         }
-        
-        // 自動填入工號
         const savedId = localStorage.getItem('savedEmpId');
         if (savedId) {
             const empInput = document.getElementById('emp-id');
             if (empInput) empInput.value = savedId;
         }
-
         renderMenu();
     };
 
     function renderMenu() {
         const menuEl = document.getElementById('menu');
         if (!menuEl) return;
-        
         let menuHTML = '';
         items.forEach((item, index) => {
             const displayName = item.name.replace(' ', '<br>');
@@ -174,8 +168,7 @@
                         <input type="number" id="qty-${index}" class="qty-input" value="1" min="1">
                         <button class="add-btn" onclick="addToCart(${index})">加入</button>
                     </div>
-                </div>
-            `;
+                </div>`;
         });
         menuEl.innerHTML = menuHTML;
     }
@@ -185,12 +178,7 @@
         const qty = parseInt(qtyInput.value) || 1;
         const item = items[index];
         const existing = cart.find(c => c.name === item.name);
-        
-        if (existing) { 
-            existing.qty += qty; 
-        } else { 
-            cart.push({ ...item, qty }); 
-        }
+        if (existing) { existing.qty += qty; } else { cart.push({ ...item, qty }); }
         renderCart();
         qtyInput.value = 1;
     }
@@ -199,20 +187,16 @@
         const listEl = document.getElementById('cart-list');
         const totalEl = document.getElementById('total-amount');
         if (!listEl || !totalEl) return;
-
         if (cart.length === 0) {
             listEl.innerHTML = '<li>尚無選餐...</li>';
             totalEl.innerText = '0';
             return;
         }
-
         listEl.innerHTML = cart.map((item, index) => `
             <li style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f9f9f9;">
                 <span><strong>${item.name}</strong> x ${item.qty}</span>
                 <button onclick="removeFromCart(${index})" style="background:#ffeded; border:none; color:#d9534f; width:28px; height:28px; border-radius:50%; cursor:pointer;">✕</button>
-            </li>
-        `).join('');
-
+            </li>`).join('');
         totalEl.innerText = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
     }
 
@@ -221,7 +205,7 @@
         renderCart();
     }
 
-function submitOrder() {
+    function submitOrder() {
         const empInput = document.getElementById('emp-id');
         const empIdValue = empInput.value.trim();
         const totalAmount = document.getElementById('total-amount').innerText;
@@ -231,56 +215,36 @@ function submitOrder() {
 
         const btn = document.querySelector('.submit-btn');
         const originalText = btn ? btn.innerText : "送出訂單";
-        
-        if (btn) {
-            btn.innerText = "傳送中...";
-            btn.disabled = true;
-        }
+        if (btn) { btn.innerText = "傳送中..."; btn.disabled = true; }
 
-        const orderSummary = cart.map(item => `${item.name.replace('\n', ' ')}x${item.qty}`).join(', ');
+        const orderSummary = cart.map(item => `${item.name}x${item.qty}`).join(', ');
         const payload = { empId: empIdValue, orderItems: orderSummary, totalPrice: totalAmount };
 
-        // --- 核心改動：先執行顯示成功與清空動作 ---
+        // 核心：直接顯示成功並背景傳送
         showSuccess(empIdValue, btn, originalText);
 
-        // --- 背景傳送資料，不管結果如何都不再干擾網頁運作 ---
         fetch('https://script.google.com/macros/s/AKfycbzFuSEGH1LZLHGGYMMakVR9FIMoeO7av3Gm1wLRAzCDc6VSCppBUdUgZ4UCWER5zne1_Q/exec', {
             method: 'POST',
             mode: 'no-cors',
             body: JSON.stringify(payload)
-        }).catch(err => console.log('背景傳送完成或被攔截'));
+        });
     }
 
     function showSuccess(empIdValue, btn, originalText) {
         const now = new Date();
         const timeString = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-
-        // 1. 彈出精美對話框
+        
         Swal.fire({
             title: 'KITA 元氣食堂',
-            html: `<div style="text-align: left; font-size: 1.1em; line-height: 1.8;">
-                    🎉 <b>訂購完成！</b><br>
-                    👤 工號：${empIdValue}<br>
-                    ⏰ 時間：${timeString}<br>
-                    ✅ 訂單已記錄至後台。
-                   </div>`,
+            html: `🎉 <b>訂購完成！</b><br>工號：${empIdValue}<br>時間：${timeString}<br>✅ 訂單已記錄至後台。`,
             icon: 'success',
-            confirmButtonColor: '#ff9800',
-            confirmButtonText: '確定'
+            confirmButtonColor: '#ff9800'
         });
 
-        // 2. 存入手機 localStorage
         localStorage.setItem('savedEmpId', empIdValue); 
-        
-        // 3. 確實清空購物車並更新畫面
         cart = []; 
         renderCart();
-
-        // 4. 恢復按鈕狀態
-        if (btn) {
-            btn.innerText = originalText;
-            btn.disabled = false;
-        });
+        if (btn) { btn.innerText = originalText; btn.disabled = false; }
     }
 </script>
 
